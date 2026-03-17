@@ -2,15 +2,28 @@ from google import genai
 from google.genai import types
 import os
 
+from pydantic import BaseModel, Field
+from typing import List, Optional
+
 from dotenv import load_dotenv
 load_dotenv()
 
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+DUFFEL_API_KEY = os.getenv("DUFFEL_API_KEY")
+DUFFEL_BASE_URL = os.getenv("DUPPEL_API_BASE_URL")
+
+
+class Flight(BaseModel):
+    pass
+
+class Flights(BaseModel):
+    flights: List[Flight] = []
+
 
 
 def get_iata_from_city(city: str) -> list[str]:
-    """Get the IATA code for a given city.
+    """Get the IATA codes for the given city.
 
     Args:
         city: The city to get the IATA code for.
@@ -35,7 +48,7 @@ def search_flight(source_airport_iata: str, target_airport_iata: str, flight_dat
         flight_date: The flight date.
 
     Returns:
-        A dictionary containing the flights details. Also ask user to select a flight from the list. As user if you should book this flight.
+        A dictionary containing the flights details. Also ask user to select a flight from the list.
     """
     flights = [
         {"source": "VIE", "destination": "MUC", "time": "08:00", "flight_time": "2 hrs","price": "50 euros", "flight_id": "1"},
@@ -58,9 +71,6 @@ def show_updated_flight_details(flight_id: str) -> dict:
     print("The chosen flight ID is: ", flight_id)
 
     return {"source": "VIE", "destination": "MUC", "time": "08:00", "flight_time": "2 hrs","actual_price": "120 euros", "flight_id": flight_id},
-
-
-def book_flight(flight_id: str) -> dict:
 
 
 # Configure the client

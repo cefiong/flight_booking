@@ -1,12 +1,11 @@
 from typing import Annotated
-
+from google.genai import types
 from fastapi import APIRouter, Depends
 
 from auth.auth import get_current_active_user
 from db.config import SessionDep
-from models.chat import Chat, LLMResponse
 from models.user import User
-from ai.llm import client, CONFIG, MODEL
+from ai.llm import CLIENT, CONFIG, MODEL
 import json
 
 
@@ -20,34 +19,29 @@ router = APIRouter(
 
 @router.post("/ai")
 async def book_flight(
+    message: str,
     session: SessionDep,
     #current_user: Annotated[User, Depends(get_current_active_user)],
-    chat: Chat
+
 ) :
-
-    conversation_history.append({
-        "role": "user",
-        "content": chat.message
-    })
-
-
-    # Send request with function declarations
-    response = client.interactions.create(
-        model=MODEL,
-        contents=chat.message,
-        config=CONFIG,
-        input=conversation_history
+    # Add user message
+    conversation_history.append(
+        types.Content(
+            role="user",
+            parts=[types.Part(text=message)]
+        )
     )
 
-    llm_data = LLMResponse.model_validate_json(response.text)
+    # Make the request
+    response = CLIENT.models.generate_content(
+        model=MODEL,
+        contents=conversation_history,
+        config=CONFIG,
+    )
 
-    conversation_history.append({
-        "role": "assistant",
-        "content": llm_data.assistant_message
-    })
+    # Add model response to history
+    conversation_history.append(response.candidates[0].content)
 
-
-
-    return response.text
-
-
+    return {
+        "model": response.text
+    }
